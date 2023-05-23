@@ -3218,57 +3218,57 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
     if cryst == 'fcc' and 'sf_111_110_us' in element_properties_database:
         plane = '111'
         direction = '110'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe1 = extract_gsfe(cryst,type_atom, output,plane,direction)
     if cryst == 'fcc' and 'sf_111_112_us' in element_properties_database:
         plane = '111'
         direction = '112'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe2 = extract_gsfe(cryst,type_atom, output,plane,direction)
     if cryst == 'bcc' and 'sf_110_111_us' in element_properties_database:
         plane = '110'
         direction = '111'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe3 = extract_gsfe(cryst,type_atom, output,plane,direction)  
     if cryst == 'bcc' and 'sf_112_111_us' in element_properties_database:
         plane = '112'
         direction = '111'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe4 = extract_gsfe(cryst,type_atom, output,plane,direction)
     if cryst == 'bcc' and 'sf_123_111_us' in element_properties_database:
         plane = '123'
         direction = '111'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe5 = extract_gsfe(cryst,type_atom, output,plane,direction)        
     if cryst == 'hcp' and 'sf_0001_1120_us' in element_properties_database:
         plane = '0001'
         direction = '1120'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe6 = extract_gsfe(cryst,type_atom, output,plane,direction)
     if cryst == 'hcp' and 'sf_0001_1010_us' in element_properties_database:
         plane = '0001'
         direction = '1010'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe7 = extract_gsfe(cryst,type_atom, output,plane,direction)
     if cryst == 'hcp' and 'sf_1010_1120_us' in element_properties_database:
         plane = '1010'
         direction = '1120'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe8 = extract_gsfe(cryst,type_atom, output,plane,direction)  
     if cryst == 'hcp' and 'sf_1101_1120_us' in element_properties_database:
         plane = '1101'
         direction = '1120'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe9 = extract_gsfe(cryst,type_atom, output,plane,direction)         
     if cryst == 'hcp' and 'sf_1101_1123_us' in element_properties_database:
         plane = '1101'
         direction = '1123'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe10 = extract_gsfe(cryst,type_atom, output,plane,direction)   
     if cryst == 'hcp' and 'sf_1122_1123_us' in element_properties_database:
         plane = '1122'
         direction = '1123'
-        gsfe(cryst,latparam,type_atom,output,plane,direction)
+        gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe11 = extract_gsfe(cryst,type_atom, output,plane,direction)         
         
         
