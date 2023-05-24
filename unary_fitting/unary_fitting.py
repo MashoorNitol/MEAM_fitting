@@ -160,6 +160,7 @@ def lammps_run(in_file):
     null_device = '/dev/null' if platform.system() != 'Windows' else 'nul'
     with open(null_device, 'w') as devnull:
         subprocess.call([lammps_executable, '-in', in_file], stdout=devnull, stderr=subprocess.STDOUT)
+        #subprocess.call(lammps_arg+[lammps_executable, '-in', in_file], stdout=devnull, stderr=subprocess.STDOUT)
 
 def minimization():
     return('fix 1 all box/relax aniso 0.0 vmax 0.1\
@@ -3666,6 +3667,8 @@ filename = "database.data"
 element = "Ti"
 style = 'meam'
 lammps_executable = './lmp_serial'
+# lammps_arg = ['mpirun','-np','128']
+# lammps_executable = '/zpool/mash/mash/softwares/lammps-23Jun2022/src/lmp_mpi'
 element_properties_database = extract_element_properties(filename, element)
 element_keys = element_properties_database.keys()
 # print(element_keys)
