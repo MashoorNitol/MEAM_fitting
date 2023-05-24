@@ -12,6 +12,9 @@ import subprocess
 import platform
 import random
 from scipy.optimize import differential_evolution
+import glob
+import re
+
 
 ev_angstrom3 = 160.2176621 # 1 eV/Å3 = 160.2176621 GPa
 # MEAM constants #
@@ -53,6 +56,65 @@ MEAM library format:
 # alpha      b0      b1      b2           b3    alat    esub    asub
 # t0         t1              t2           t3            rozero  ibar
 """
+def find_file_with_lowest_float(file_list):
+    lowest_float = float('inf')
+    lowest_file = None
+
+    for file_name in file_list:
+        match = re.search(r'(\d+\.\d+)$', file_name)
+        if match:
+            float_num = float(match.group(1))
+            if float_num < lowest_float:
+                lowest_float = float_num
+                lowest_file = file_name
+
+    return lowest_file
+
+
+def allocate_variables(file_path, variable_names, line_numbers, column_positions):
+    variables = {}
+
+    # Open the file for reading
+    with open(file_path, 'r') as file:
+        # Read all lines from the file
+        lines = file.readlines()
+
+    # Extract the desired values from the specified line numbers and column positions
+    for variable_name, line_number, column_position in zip(variable_names, line_numbers, column_positions):
+        if line_number <= len(lines):
+            line_values = re.split(r'\s+', lines[line_number - 1].strip())
+            if column_position < len(line_values):
+                variable_value = float(line_values[column_position])
+            else:
+                variable_value = None
+        else:
+            variable_value = None
+
+        variables[variable_name] = variable_value
+
+    return variables
+
+
+def assign_variables_with_multipliers(lowest_file, variable_names, line_numbers, column_positions, multiplier1, multiplier2):
+    allocated_variables = allocate_variables(lowest_file, variable_names, line_numbers, column_positions)
+    output_list = []
+
+    for var_name, var_value in allocated_variables.items():
+        # Check if the value is negative
+        if var_value < 0:
+            # If negative, append the values in reverse order
+            output_list.append((multiplier2 * var_value, multiplier1 * var_value))
+        else:
+            # If positive, append the values in normal order
+            output_list.append((multiplier1 * var_value, multiplier2 * var_value))
+
+    assigned_variables = {}
+
+    for i, var_name in enumerate(variable_names):
+        assigned_variables[var_name] = (output_list[i][0], output_list[i][1])
+
+    return assigned_variables
+
 def write_library(element_properties_database, element, element_struc, first_near, ielement, atwt,
                        alpha, b0, b1, b2, b3, latparam, cohesieve_energy, asub, t0, t1, t2, t3, rozero, ibar):
     file_name = f"{element_properties_database.get('symbol')}.library"
@@ -86,30 +148,47 @@ def write_parameter(element_properties_database, rc, delr, augt1, erose_form, ia
     
     return file_name
 
+
+def find_file_with_lowest_float(file_list):
+    lowest_float = float('inf')
+    lowest_file = None
+
+    for file_name in file_list:
+        match = re.search(r'(\d+\.\d+)$', file_name)
+        if match:
+            float_num = float(match.group(1))
+            if float_num < lowest_float:
+                lowest_float = float_num
+                lowest_file = file_name
+
+    return lowest_file
         
-def meam_prop_calc(element,element_properties):
-    latparam = float(element_properties.get("lattice_constant_a"))
-    cohesieve_energy = float(element_properties.get("cohesieve_energy"))
-    element_struc = element_properties.get("ground_state")
-    if element_properties.get("ground_state") == 'hcp' or element_properties.get("ground_state") == 'fcc':
+def meam_prop_calc(element,element_properties_database):
+    latparam = float(element_properties_database.get("lattice_constant_a"))
+    if element_properties_database.get("ground_state") == 'hcp':
+        latparam_z = float(element_properties_database.get("ca_ratio"))*latparam
+    cohesieve_energy = float(element_properties_database.get("cohesieve_energy"))
+    element_struc = element_properties_database.get("ground_state")
+    if element_properties_database.get("ground_state") == 'hcp' or element_properties_database.get("ground_state") == 'fcc':
         first_near = int(12)
-    elif element_properties.get("ground_state") == 'bcc':
+    elif element_properties_database.get("ground_state") == 'bcc':
         first_near = int(8)
-    atwt = element_properties.get("atomic_weight")
-    if element_properties.get("ground_state") == 'bcc':
+    atwt = element_properties_database.get("atomic_weight")
+    if element_properties_database.get("ground_state") == 'bcc':
         unit_vol = (latparam**3)/2
-    elif element_properties.get("ground_state") == 'fcc':
+    elif element_properties_database.get("ground_state") == 'fcc':
         unit_vol = (latparam**3)/4
-    elif element_properties.get("ground_state") == 'hcp':
-        unit_vol = (3*np.sqrt(2.)*(latparam**3))/6
-    bulk_modulus = float(element_properties.get("bulk_modulus"))
-    shear_modulus = float(element_properties.get("shear_modulus"))
+    elif element_properties_database.get("ground_state") == 'hcp':
+        #unit_vol = (3*np.sqrt(2.)*(latparam**3))/6
+        unit_vol = (latparam*((np.sqrt(3.)/2)*latparam)*latparam_z)/2
+    bulk_modulus = float(element_properties_database.get("bulk_modulus"))
+    shear_modulus = float(element_properties_database.get("shear_modulus"))
     alpha = np.sqrt(9*bulk_modulus*unit_vol/(cohesieve_energy*ev_angstrom3))
-    if element_properties.get("ground_state") == 'fcc':
+    if element_properties_database.get("ground_state") == 'fcc':
         re = (1/np.sqrt(2.))*latparam
-    elif element_properties.get("ground_state") == 'bcc':
+    elif element_properties_database.get("ground_state") == 'bcc':
         re = (np.sqrt(3.)/2)*latparam
-    elif element_properties.get("ground_state") == 'hcp':
+    elif element_properties_database.get("ground_state") == 'hcp':
         re = latparam
     return (latparam,cohesieve_energy,element_struc,first_near,atwt,alpha,re)
 
@@ -163,8 +242,58 @@ def lammps_header():
 def relaxation():
     return('\nminimize 1e-8 1e-8 1000 1000\
            \nrun 0')
+
+def minimized_output():
+    return('variable natoms equal count(all)\
+           \nvariable teng equal "etotal"\
+           \nvariable ecoh equal  v_teng/v_natoms\
+           \nvariable length equal "lx"\
+           \nvariable lengthZ equal "lz"\
+           \nvariable perA_vol equal "vol/v_natoms"\
+           \nvariable ca_ratio equal "v_lengthZ/v_length"\
+           \nprint "---------------------------------------------------------------------------" append %s\
+           \nprint "# minimized structure and energy" append %s\
+           \nprint "Cohesive energy (eV) = ${ecoh}" append %s\
+           \nprint "Lattice constant (Angstroms) = ${length}" append %s\
+           \nprint "C/A ratio  = ${ca_ratio}" append %s\
+           \nprint "Volume per atom (Angstrom^3/atom) = ${perA_vol}" append %s\
+           \nprint "---------------------------------------------------------------------------" append %s'%(output,output,output,output,output,output,output))
+
+def cold_curve(cryst,latparam,type_atom,output,potential_file):
+    properties='energy_volume_%s_%s'%(cryst,type_atom)
+    os.system('rm ev.pdf')
+    """
+    energy-volume curve calculaiton  using LAMMPS for any given material
+    """
+    with open('ev.in', 'w') as f:
+        f.write(lammps_header() + '\n\n')
+        f.write(struct_mod(cryst,element_properties_database) + '\n\n')
+        f.write(potential_mod(style,potential_file) + '\n\n')
+        f.write(output_mod() + '\n\n')
+        f.write(minimization() + '\n\n')
+        f.write(minimized_output() + '\n\n')
+        f.write('\nvariable etot equal etotal\
+                \nvariable lenx equal lx\
+                \nvariable Volume equal vol\
+                \nvariable peratom_vol equal v_Volume/v_natoms\
+                \nvariable peratom_energy equal v_etot/v_natoms\
+                \n\nchange_box all x scale 0.75 y scale 0.75 z scale 0.75 remap\
+                \nfix 1 all deform 1 x scale 2.0 y scale 2.0 z scale 2.0\
+                \nfix EV all print 10 "${peratom_vol} ${peratom_energy}" file energy_vol.dat\
+                \nrun 500\
+                \nunfix 1')
                 
-def struct_mod(cryst):
+    lammps_run('ev.in')
+    ev_data = np.genfromtxt('energy_vol.dat',skip_header=1)
+    ax.plot(ev_data[:,0],ev_data[:,1],'ro-',color=adjust_lightness('red',0.7),linewidth=2,markersize=8,fillstyle='full',label=r'EV curve of %s %s'%(cryst.upper(),type_atom))
+    ax.set_xlabel(r'Volume per atom (\AA$^3$)',fontweight='bold')
+    ax.set_ylabel(r'Energy per atom (eV/atom)',fontweight='bold')
+    ax.legend(loc='best',fontsize=16,frameon=True,fancybox=False,edgecolor='k')
+    fig.savefig('ev.pdf')
+    os.system('mkdir %s'%properties)
+    os.system('mv dump_lammps ev.pdf log.lammps ev.in energy_vol.dat %s/'%properties)
+                
+def struct_mod(cryst,element_properties_database):
     if cryst=='fcc':
         return('variable a equal %.6f\nlattice fcc $a\
                \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
@@ -176,9 +305,19 @@ def struct_mod(cryst):
                \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
                     \ncreate_box 1 box\ncreate_atoms 1 box'%latparam)
     elif cryst=='hcp':
-        return('variable a equal %.6f\nlattice hcp $a\
+        if element_properties_database.get("symbol") == 'Ti' or element_properties_database.get("symbol") == 'Zr' or element_properties_database.get("symbol") == 'Hf':
+            return('variable a equal %.6f\nlattice hcp $a\
                 \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
-                    \ncreate_box 1 box\ncreate_atoms 1 box'%latparam)
+                    \ncreate_box 1 box\ncreate_atoms 1 box\
+                        \nchange_box all z scale 0.9712 remap\n'%latparam)
+        else:
+            return('variable a equal %.6f\nlattice hcp $a\
+                   \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
+                   \ncreate_box 1 box\ncreate_atoms 1 box'%latparam)
+    # elif cryst=='hcp':
+    #     return('variable a equal %.6f\nlattice hcp $a\
+    #             \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
+    #                 \ncreate_box 1 box\ncreate_atoms 1 box'%latparam)
 
 def extract_constants(crystal,output):
     # Read the output.txt file
@@ -325,11 +464,11 @@ def elastic_constant(cryst,latparam,type_atom,output,potential_file):
         f.write('variable etol equal 1.0e-8\nvariable ftol equal 1.0e-8\n\
                 variable maxiter equal 1000\nvariable maxeval equal 1000\
                 \nvariable dmax equal 1.0e-2\n')
-        f.write(struct_mod(cryst) + '\n\n')
+        f.write(struct_mod(cryst,element_properties_database) + '\n\n')
         f.write('mass * 1.0e-20\n')
         f.write(potential_mod(style,potential_file) + '\n\n')
         f.write(output_mod() + '\n\n')
-        f.write('\nfix 3 all box/relax  aniso 0.0 vmax 0.1\n')
+        f.write('\nfix 3 all box/relax  aniso 0.0 vmax 0.001\n')
         f.write('min_style cg\nmin_modify       dmax ${dmax} line quadratic\n')
         f.write(relaxation() + '\n\n')
         f.write('variable tmp equal pxx\nvariable pxx0 equal ${tmp}\nvariable tmp equal pyy\
@@ -379,6 +518,7 @@ def elastic_constant(cryst,latparam,type_atom,output,potential_file):
             \nprint "c66 = ${C66all} ${cunits}" append %s\
             \nprint "---------------------------------------------------------------------------" append %s'%(output,output,output,output,output,output,output,output,output,output,output,output,output,output))
         f.write('\nrun 0\n')
+        f.write(minimized_output() + '\n\n')
     
     lammps_run('elastic.in')
 
@@ -419,7 +559,7 @@ def vacancy_formation(cryst,latparam,type_atom,output,potential_file):
     """
     with open('vac.in', 'w') as f:
         f.write(lammps_header() + '\n\n')
-        f.write(struct_mod(cryst) + '\n\n')
+        f.write(struct_mod(cryst,element_properties_database) + '\n\n')
         f.write(potential_mod(style,potential_file) + '\n\n')
         f.write(output_mod() + '\n\n')
         f.write(minimization() + '\n\n')
@@ -503,7 +643,7 @@ def interstetial_octa_fcc(cryst,latparam,type_atom,output,defect,potential_file)
                 coord = [0.5,0.5,0.5]
                 with open('inter.in', 'w') as f:
                     f.write(lammps_header() + '\n\n')
-                    f.write(struct_mod(cryst) + '\n\n')
+                    f.write(struct_mod(cryst,element_properties_database) + '\n\n')
                     f.write(potential_mod(style,potential_file) + '\n\n')
                     f.write(output_mod() + '\n\n')
                     f.write(minimization() + '\n\n')
@@ -584,7 +724,7 @@ def interstetial_tetra_fcc(cryst,latparam,type_atom,output,defect,potential_file
                 coord_tet = [3/4.0,3/4.0,0.0]
                 with open('inter.in', 'w') as f:
                     f.write(lammps_header() + '\n\n')
-                    f.write(struct_mod(cryst) + '\n\n')
+                    f.write(struct_mod(cryst,element_properties_database) + '\n\n')
                     f.write(potential_mod(style,potential_file) + '\n\n')
                     f.write(output_mod() + '\n\n')
                     f.write(minimization() + '\n\n')
@@ -664,7 +804,7 @@ def interstetial_octa_bcc(cryst,latparam,type_atom,output,defect,potential_file)
                 coord = [0.5,0.5,0.0]
                 with open('inter.in', 'w') as f:
                     f.write(lammps_header() + '\n\n')
-                    f.write(struct_mod(cryst) + '\n\n')
+                    f.write(struct_mod(cryst,element_properties_database) + '\n\n')
                     f.write(potential_mod(style,potential_file) + '\n\n')
                     f.write(output_mod() + '\n\n')
                     f.write(minimization() + '\n\n')
@@ -744,7 +884,7 @@ def interstetial_tetra_bcc(cryst,latparam,type_atom,output,defect,potential_file
                 coord_tet = [1/4.0,1/4.0,1/4.0]
                 with open('inter.in', 'w') as f:
                     f.write(lammps_header() + '\n\n')
-                    f.write(struct_mod(cryst) + '\n\n')
+                    f.write(struct_mod(cryst,element_properties_database) + '\n\n')
                     f.write(potential_mod(style,potential_file) + '\n\n')
                     f.write(output_mod() + '\n\n')
                     f.write(minimization() + '\n\n')
@@ -827,7 +967,7 @@ def interstetial_octa_hcp(cryst,latparam,type_atom,output,defect,potential_file)
                 with open('inter.in', 'w') as f:
                     f.write(lammps_header() + '\n\n')
                     f.write('\nread_data unitcell.lmp'+ '\n\n')
-                    #f.write(struct_mod(cryst) + '\n\n')
+                    #f.write(struct_mod(cryst,element_properties_database) + '\n\n')
                     f.write(potential_mod(style,potential_file) + '\n\n')
                     f.write(output_mod() + '\n\n')
                     f.write(minimization() + '\n\n')
@@ -909,7 +1049,7 @@ def interstetial_tetra_hcp(cryst,latparam,type_atom,output,defect,potential_file
                 with open('inter.in', 'w') as f:
                     f.write(lammps_header() + '\n\n')
                     f.write('\nread_data unitcell.lmp'+ '\n\n')
-                    #f.write(struct_mod(cryst) + '\n\n')
+                    #f.write(struct_mod(cryst,element_properties_database) + '\n\n')
                     f.write(potential_mod(style,potential_file) + '\n\n')
                     f.write(output_mod() + '\n\n')
                     f.write(minimization() + '\n\n')
@@ -1889,7 +2029,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2012,7 +2152,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2140,7 +2280,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2257,7 +2397,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2374,7 +2514,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2498,7 +2638,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2619,7 +2759,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2743,7 +2883,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2864,7 +3004,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -2978,7 +3118,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -3100,7 +3240,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 2.0:
+                        if difference_val < 0.5:
                             flag = True
                             break
                 
@@ -3157,7 +3297,9 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
 # update the errors list
 # update the weights
     constants=elastic_constant(cryst,latparam,type_atom,output,potential_file)
-    vac_form = vacancy_formation(cryst,latparam,type_atom,output,potential_file)
+    # cold_curve(cryst,latparam,type_atom,output,potential_file)
+    if 'e_vac' in element_properties_database:
+        vac_form = vacancy_formation(cryst,latparam,type_atom,output,potential_file)
     if 'e_octa' in element_properties_database and cryst == 'bcc':
         defect = 'octahedral'
         interinfo_octra = interstetial_octa_bcc(cryst, latparam, type_atom, output, defect, potential_file)
@@ -3212,8 +3354,8 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
     if 'fs_1122' in element_properties_database and cryst == 'hcp':
         surface = '1122'
         surface_info1122hcp = freesurfaceenergy(cryst,latparam,type_atom,output,surface, potential_file)
-        
-    pd_diff = phase_energy_difference(cryst,latparam,type_atom,output,potential_file)
+    if 'deltaE_' in  element_properties_database:  
+        pd_diff = phase_energy_difference(cryst,latparam,type_atom,output,potential_file)
     
     if cryst == 'fcc' and 'sf_111_110_us' in element_properties_database:
         plane = '111'
@@ -3599,25 +3741,25 @@ output = 'output_lammps_sims.data'
 if os.path.exists("%s"%output):
     os.remove("%s"%output)
 
-pf = ' potential_files_%s'%element
+pf = 'potential_files_%s'%element
 os.system('mkdir %s'%pf)               
 #### Bound values, very important!!!!!!!!!!!!!!!!
 # weight from 0 to 1
 # weights = {'c11': 1.0, 'c12': 1.0, 'c13':0.0, 'c33':0.0, 'c44':1.0}  # adjust these weights as needed
 
-b0b=(2.0, 6.0)
-b1b=(1.0, 4.0)
-b2b=(1.0, 4.0)
-b3b=(1.0, 4.0)
+b0b=(2.0, 3.0)
+b1b=(2.0, 3.0)
+b2b=(4.0, 5.0)
+b3b=(2.0, 3.0)
 t0b=(1.0, 1.0) # must be 1
-t1b=(-2, 7)
-t2b=(-5, 1)
-t3b=(-15, -10)
-Cminb= (0.2,0.49)
-Cmaxb=(2.7, 2.8)
-asubb=(0.6, 0.8)
+t1b=(0.1, 1)
+t2b=(4, 5 )
+t3b=(-14, -12)
+Cminb= (0.38,0.49)
+Cmaxb=(2.8, 2.8)
+asubb=(0.6, 0.7)
 # alpha=4.719331
-bounds = [b0b,b1b,b2b,b3b,t0b,t1b,t2b,t3b,Cminb,Cmaxb,asubb,(0.995*alpha, 1.005*alpha)]
+bounds = [b0b,b1b,b2b,b3b,t0b,t1b,t2b,t3b,Cminb,Cmaxb,asubb,(1.0*alpha, 1.0*alpha)]
 
 convergence_threshold = 0.005  # Initial convergence threshold
 
@@ -3638,21 +3780,6 @@ optimal_error = result.fun
 print("Optimal Parameters:", optimal_params)
 print("Optimal Error:", optimal_error)
 
-## check functions
-# latparam,cohesieve_energy, element_struc, first_near, atwt, alpha, re = meam_prop_calc(element,element_properties_database)
-# # elastic constant functions input
-# cryst = element_properties_database.get("ground_state")
-# latparam = float(element_properties_database.get("lattice_constant_a"))
-# type_atom = element_properties_database.get("symbol")
-# output = 'output_lammps_sims.data'
-# if os.path.exists("%s"%output):
-#     os.remove("%s"%output)
-# potential_file = 'Nb.library_0.07_vacinter Nb Nb.parameter_0.07_vacinter Nb'
-
-# if 'e_tetra' in element_properties_database and cryst == 'bcc':
-#     defect = 'tetrahedral'
-#     interinfo_tetra = interstetial_tetra_bcc(cryst, latparam, type_atom, output, defect, potential_file)
-#     print(interinfo_tetra)
 
 
 
