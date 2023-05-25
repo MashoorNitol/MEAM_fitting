@@ -160,7 +160,6 @@ def lammps_run(in_file):
     null_device = '/dev/null' if platform.system() != 'Windows' else 'nul'
     with open(null_device, 'w') as devnull:
         subprocess.call([lammps_executable, '-in', in_file], stdout=devnull, stderr=subprocess.STDOUT)
-        #subprocess.call(lammps_arg+[lammps_executable, '-in', in_file], stdout=devnull, stderr=subprocess.STDOUT)
 
 def minimization():
     return('fix 1 all box/relax aniso 0.0 vmax 0.1\
@@ -496,7 +495,7 @@ def extract_vacancy_formation_energy(type_sim,output):
         return None
     
 def vacancy_formation(cryst,latparam,type_atom,output,potential_file):
-    properties='vacancy_formation_%s_%s'%(cryst,latparam)
+    properties='vacancy_formation_%s_%s'%(cryst,type_atom)
     """
     vacancy formation calculaiton  using LAMMPS for any given material
     """
@@ -1972,7 +1971,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -1984,7 +1983,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data = np.genfromtxt(gsfe_output)          
             x_data = [i for i in np.linspace(0,1,len(data))]
-            y_data = [(data[i][1])/1000 - (data[0][1])/1000 for i in range(len(data))]
+            y_data = [(data[i][1]-data[0][1])/1000 for i in range(len(data))]
             y_subset = [y for x, y in zip(x_data, y_data) if 0 <= x <= 0.3]
             y_usf = max(y_subset)
             y_subset = [y for x, y in zip(x_data, y_data) if 0.3 <= x <= 0.6]
@@ -2095,7 +2094,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2107,7 +2106,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data2 = np.genfromtxt(gsfe_output)         
             x_data2 = [i2 for i2 in np.linspace(0,1,len(data2))]
-            y_data2 = [(data2[i][1])/1000 - (data2[0][1])/1000 for i in range(len(data2))]
+            y_data2 = [(data2[i][1]-data2[0][1])/1000 for i in range(len(data2))]
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0 <= x2 <= 0.45]
             y_usf2 = max(y_subset2)
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.45 <= x2 <= 0.6]
@@ -2223,7 +2222,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2235,7 +2234,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             dataB = np.genfromtxt(gsfe_output)     
             x_dataB = [iB for iB in np.linspace(0,1,len(dataB))]
-            y_dataB = [(dataB[iB][1])/1000 - (dataB[0][1])/1000 for iB in range(len(dataB))]
+            y_dataB = [(dataB[iB][1]-dataB[0][1])/1000 for iB in range(len(dataB))]
             y_subsetB = [yB for xB, yB in zip(x_dataB, y_dataB) if 0.3 <= xB <= 0.6]
             y_usfB = max(y_subsetB)           
             direction = '111'
@@ -2340,7 +2339,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2352,7 +2351,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data2 = np.genfromtxt(gsfe_output)    
             x_data2 = [i2 for i2 in np.linspace(0,1,len(data2))]
-            y_data2 = [(data2[i][1])/1000 - (data2[0][1])/1000 for i in range(len(data2))]
+            y_data2 = [(data2[i][1]-data2[0][1])/1000 for i in range(len(data2))]
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.3 <= x2 <= 0.6]
             y_usf2 = max(y_subset2)
             fig2, ax2 = plt.subplots(facecolor='w',edgecolor='k',tight_layout=True)
@@ -2457,7 +2456,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2469,7 +2468,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data3 = np.genfromtxt(gsfe_output)    
             x_data3 = [i3 for i3 in np.linspace(0,1,len(data3))]
-            y_data3 = [(data3[i][1])/1000 - (data3[0][1])/1000 for i in range(len(data3))]
+            y_data3 = [(data3[i][1]-data3[0][1])/1000 for i in range(len(data3))]
             y_subset3 = [y3 for x3, y3 in zip(x_data3, y_data3) if 0.3 <= x3 <= 0.6]
             y_usf3 = max(y_subset3)
             fig3, ax3 = plt.subplots(facecolor='w',edgecolor='k',tight_layout=True)
@@ -2581,7 +2580,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2593,7 +2592,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             datahcp = np.genfromtxt(gsfe_output)    
             x_datahcp = [ihcp for ihcp in np.linspace(0,1,len(datahcp))]
-            y_datahcp = [(datahcp[ihcp][1])/1000 - (datahcp[0][1])/1000 for ihcp in range(len(datahcp))]
+            y_datahcp = [(datahcp[ihcp][1]-datahcp[0][1])/1000 for ihcp in range(len(datahcp))]
             y_subsethcp = [yhcp for xhcp, yhcp in zip(x_datahcp, y_datahcp) if 0.2 <= xhcp <= 0.3]
             y_usfhcp = max(y_subsethcp)
             y_subsethcp = [yhcp for xhcp, yhcp in zip(x_datahcp, y_datahcp) if 0.35 <= xhcp <= 0.55]
@@ -2702,7 +2701,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2714,7 +2713,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data2 = np.genfromtxt(gsfe_output)     
             x_data2 = [i2 for i2 in np.linspace(0,1,len(data2))]
-            y_data2 = [(data2[i2][1])/1000 - (data2[0][1])/1000 for i2 in range(len(data2))]
+            y_data2 = [(data2[i2][1]-data2[0][1])/1000 for i2 in range(len(data2))]
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.0 <= x2 <= 0.25]
             y_usf2 = max(y_subset2)
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.25 <= x2 <= 0.5]
@@ -2826,7 +2825,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2838,7 +2837,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data3 = np.genfromtxt(gsfe_output)     
             x_data3 = [i3 for i3 in np.linspace(0,1,len(data3))]
-            y_data3 = [(data3[i3][1]) - (data3[0][1])/1000 for i3 in range(len(data3))]
+            y_data3 = [(data3[i3][1] - data3[0][1])/1000 for i3 in range(len(data3))]
             y_subset3 = [y3 for x3, y3 in zip(x_data3, y_data3) if 0.0 <= x3 <= 0.45]
             y_usf3 = max(y_subset3)
             y_subset3 = [y3 for x3, y3 in zip(x_data3, y_data3) if 0.45 <= x3 <= 0.65]
@@ -2947,7 +2946,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -2959,7 +2958,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data4 = np.genfromtxt(gsfe_output)     
             x_data4 = [i4 for i4 in np.linspace(0,1,len(data4))]
-            y_data4 = [(data4[i4][1])/1000 - (data4[0][1])/1000 for i4 in range(len(data4))]
+            y_data4 = [(data4[i4][1]-data4[0][1])/1000 for i4 in range(len(data4))]
             y_subset4 = [y4 for x4, y4 in zip(x_data4, y_data4) if 0.0 <= x4 <= 0.45]
             y_usf4 = max(y_subset4)
             y_subset4 = [y4 for x4, y4 in zip(x_data4, y_data4) if 0.45 <= x4 <= 0.65]
@@ -3061,7 +3060,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -3073,7 +3072,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data5 = np.genfromtxt(gsfe_output)    
             x_data5 = [i5 for i5 in np.linspace(0,1,len(data5))]
-            y_data5 = [(data5[i5][1])/1000 - (data5[0][1])/1000 for i5 in range(len(data5))]
+            y_data5 = [(data5[i5][1]-data5[0][1])/1000 for i5 in range(len(data5))]
             y_subset5 = [y5 for x5, y5 in zip(x_data5, y_data5) if 0.2 <= x5 <= 0.35]
             y_usf5 = max(y_subset5)
             y_subset5 = [y5 for x5, y5 in zip(x_data5, y_data5) if 0.35 <= x5 <= 0.55]
@@ -3183,7 +3182,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                         last_value = float(linesgsfe[-1].split()[1])
                         difference_val = last_value-target_value
                         # Check if the new value satisfies the condition
-                        if difference_val < 0.5:
+                        if difference_val < 2.0:
                             flag = True
                             break
                 
@@ -3195,7 +3194,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data6 = np.genfromtxt(gsfe_output)     
             x_data6 = [i6 for i6 in np.linspace(0,1,len(data6))]
-            y_data6 = [(data6[i6][1])/1000 - (data6[0][1])/1000 for i6 in range(len(data6))]
+            y_data6 = [(data6[i6][1] - data6[0][1])/1000 for i6 in range(len(data6))]
             y_subset6 = [y6 for x6, y6 in zip(x_data6, y_data6) if 0.2 <= x6 <= 0.35]
             y_usf6 = max(y_subset6)
             y_subset6 = [y6 for x6, y6 in zip(x_data6, y_data6) if 0.35 <= x6 <= 0.55]
@@ -3297,7 +3296,7 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
     if 'fs_1122' in element_properties_database and cryst == 'hcp':
         surface = '1122'
         surface_info1122hcp = freesurfaceenergy(cryst,latparam,type_atom,output,surface, potential_file)
-    if 'deltaE_' in  element_properties_database:  
+    if cryst == 'hcp'  and 'deltaE_fcc' in  element_properties_database:  
         pd_diff = phase_energy_difference(cryst,latparam,type_atom,output,potential_file)
     
     if cryst == 'fcc' and 'sf_111_110_us' in element_properties_database:
@@ -3458,42 +3457,41 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
                 diff1122hcp =  (float(value1122hcp) - float(element_properties_database[param_name1122hcp]))**2
                 errors.append(diff1122hcp)
         if cryst == 'fcc' and key == 'deltaE_hcp':
-            param_namediffhcp = key
-            if param_namediffhcp in pd_diff and param_namediffhcp in element_properties_database:
-                valuefhcp = pd_diff[param_namediffhcp]
-                diffvaluefhcp = (float(valuefhcp) - float(element_properties_database[param_namediffhcp]))**2
-                errors.append(diffvaluefhcp)
+            param_namedifffcc = key
+            if param_namedifffcc in pd_diff and param_namedifffcc in element_properties_database:
+                valueffcc = pd_diff[param_namedifffcc]
+                diffvaluefcc = (float(valueffcc) - float(element_properties_database[param_namedifffcc]))**2
+                errors.append(diffvaluefcc)
         if cryst == 'fcc' and key == 'deltaE_bcc':
-            param_namediffhcp = key
-            if param_namediffhcp in pd_diff and param_namediffhcp in element_properties_database:
-                valuefhcp = pd_diff[param_namediffhcp]
-                diffvaluefhcp = (float(valuefhcp) - float(element_properties_database[param_namediffhcp]))**2
-                errors.append(diffvaluefhcp)                  
+            param_namedifffcc2 = key
+            if param_namedifffcc2 in pd_diff and param_namedifffcc2 in element_properties_database:
+                valueffcc2 = pd_diff[param_namedifffcc2]
+                diffvalueffcc2 = (float(valueffcc2) - float(element_properties_database[param_namedifffcc2]))**2
+                errors.append(diffvalueffcc2)                  
         if cryst == 'bcc' and key == 'deltaE_fcc':
-            param_namediffhcp = key
-            if param_namediffhcp in pd_diff and param_namediffhcp in element_properties_database:
-                valuefhcp = pd_diff[param_namediffhcp]
-                diffvaluefhcp = (float(valuefhcp) - float(element_properties_database[param_namediffhcp]))**2
-                errors.append(diffvaluefhcp)  
+            param_namediffbcc1 = key
+            if param_namediffbcc1 in pd_diff and param_namediffbcc1 in element_properties_database:
+                valuebcc1 = pd_diff[param_namediffbcc1]
+                diffvaluebcc1 = (float(valuebcc1) - float(element_properties_database[param_namediffbcc1]))**2
+                errors.append(diffvaluebcc1)  
         if cryst == 'bcc' and key == 'deltaE_hcp':
-            param_namediffhcp = key
-            if param_namediffhcp in pd_diff and param_namediffhcp in element_properties_database:
-                valuefhcp = pd_diff[param_namediffhcp]
-                print(valuefhcp)
-                diffvaluefhcp = (float(valuefhcp) - float(element_properties_database[param_namediffhcp]))**2
-                errors.append(diffvaluefhcp)                  
+            param_namediffbcc2 = key
+            if param_namediffbcc2 in pd_diff and param_namediffbcc2 in element_properties_database:
+                valuefbcc2 = pd_diff[param_namediffbcc2]
+                diffvaluebcc2= (float(valuefbcc2) - float(element_properties_database[param_namediffbcc2]))**2
+                errors.append(diffvaluebcc2)                  
         if cryst == 'hcp' and key == 'deltaE_fcc':
-            param_namediffhcp = key
-            if param_namediffhcp in pd_diff and param_namediffhcp in element_properties_database:
-                valuefhcp = pd_diff[param_namediffhcp]
-                diffvaluefhcp = (float(valuefhcp) - float(element_properties_database[param_namediffhcp]))**2
-                errors.append(diffvaluefhcp)  
+            param_namediffhcp1 = key
+            if param_namediffhcp1 in pd_diff and param_namediffhcp1 in element_properties_database:
+                valuehcp1 = pd_diff[param_namediffhcp1]
+                diffvaluehcp1 = (float(valuehcp1) - float(element_properties_database[param_namediffhcp1]))**2
+                errors.append(diffvaluehcp1)  
         if cryst == 'hcp' and key == 'deltaE_bcc':
-            param_namediffhcp = key
-            if param_namediffhcp in pd_diff and param_namediffhcp in element_properties_database:
-                valuefhcp = pd_diff[param_namediffhcp]
-                diffvaluefhcp = (float(valuefhcp) - float(element_properties_database[param_namediffhcp]))**2
-                errors.append(diffvaluefhcp)
+            param_namediffhcp2 = key
+            if param_namediffhcp2 in pd_diff and param_namediffhcp2 in element_properties_database:
+                valuehcp2 = pd_diff[param_namediffhcp2]
+                diffvaluehcp2 = (float(valuehcp2) - float(element_properties_database[param_namediffhcp2]))**2
+                errors.append(diffvaluehcp2)
         if cryst == 'fcc' and key == 'sf_111_110_us':
             param_name111_110us = key
             if param_name111_110us in result_gsfe1 and param_name111_110us in element_properties_database:
@@ -3655,7 +3653,8 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
         # print('~~ ERROR:{}'.format(str(serror)))        
         os.system('cp %s %s_%s'%(lib_file,lib_file,str(serror)))
         os.system('cp %s %s_%s'%(param_file,param_file,str(serror)))
-        os.system('mv %s_%s %s_%s %s/'%(lib_file,str(serror),param_file,str(serror),pf))
+        os.system('cp %s %s_%s'%(output,output,str(serror)))
+        os.system('mv %s_%s %s_%s %s_%s %s/'%(lib_file,str(serror),param_file,str(serror),output,str(serror),pf))
     return error 
  
 
@@ -3667,8 +3666,6 @@ filename = "database.data"
 element = "Ti"
 style = 'meam'
 lammps_executable = './lmp_serial'
-# lammps_arg = ['mpirun','-np','128']
-# lammps_executable = '/zpool/mash/mash/softwares/lammps-23Jun2022/src/lmp_mpi'
 element_properties_database = extract_element_properties(filename, element)
 element_keys = element_properties_database.keys()
 # print(element_keys)
@@ -3691,20 +3688,18 @@ os.system('mkdir %s'%pf)
 #### Bound values, very important!!!!!!!!!!!!!!!!
 # weight from 0 to 1
 # weights = {'c11': 1.0, 'c12': 1.0, 'c13':0.0, 'c33':0.0, 'c44':1.0}  # adjust these weights as needed
-
-b0b=(2.0, 3.0)
-b1b=(2.0, 3.0)
-b2b=(4.0, 5.0)
-b3b=(2.0, 3.0)
-t0b=(1.0, 1.0) # must be 1
-t1b=(0.1, 1)
-t2b=(4, 5 )
-t3b=(-14, -12)
-Cminb= (0.38,0.49)
-Cmaxb=(2.8, 2.8)
-asubb=(0.6, 0.7)
-# alpha=4.719331
-bounds = [b0b,b1b,b2b,b3b,t0b,t1b,t2b,t3b,Cminb,Cmaxb,asubb,(1.0*alpha, 1.0*alpha)]
+b0b=(1.0, 3.0)
+b1b=(1.0, 2.0)
+b2b=(1.0, 4.0) 
+b3b=(1.0, 2.0) 
+t0b=(1.0, 1.0) # must be 1 
+t1b=(4.0, 8.0) 
+t2b=(-3.0, -1.0) 
+t3b=(-14.0, -11.0) 
+Cminb= (0.38,0.49) 
+Cmaxb=(2.8, 2.8) 
+asubb=(0.6, 0.8)
+bounds = [b0b,b1b,b2b,b3b,t0b,t1b,t2b,t3b,Cminb,Cmaxb,asubb,(0.9*alpha, 1.1*alpha)]
 
 convergence_threshold = 0.005  # Initial convergence threshold
 
