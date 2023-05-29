@@ -9,6 +9,32 @@ Created on Wed May 24 09:36:13 2023
 import re
 import glob
 
+def calculate_bounds(multiplier,lowest_file2):
+    with open("%s"%lowest_file2, "r") as file:
+        content = file.readlines()
+
+    # Find Cmin and Cmax values
+    cmin = None
+    cmax = None
+    for line in content:
+        if "Cmin(1,1,1)" in line:
+            cmin = float(line.split("=")[-1])
+        elif "Cmax(1,1,1)" in line:
+            cmax = float(line.split("=")[-1])
+
+    if cmin is None or cmax is None:
+        print("Cmin or Cmax values not found in the file.")
+        return
+
+    # Calculate lower and upper bounds
+    cmin_bounds = (cmin * multiplier[0], cmin * multiplier[1])
+    cmax_bounds = (cmax * multiplier[0], cmax * multiplier[1])
+
+    # Print the results
+    print("Cminb =", cmin_bounds)
+    print("Cmaxb =", cmax_bounds)
+
+
 def find_file_with_lowest_float(file_list):
     lowest_float = float('inf')
     lowest_file = None
@@ -69,13 +95,16 @@ def assign_variables_with_multipliers(lowest_file, variable_names, line_numbers,
     return assigned_variables
 
 
-element = 'Ti'
+element = 'Zr'
 pf = 'potential_files_%s' % element
 folder_path = '%s/' % pf  # Replace './' with the actual folder path if different
-file_pattern = "%sTi.library_*" % folder_path
+file_pattern = "%sZr.library_*" % folder_path
+file_pattern2 = "%sZr.parameter_*" % folder_path
 file_list = glob.glob(file_pattern)
+file_list2 = glob.glob(file_pattern2)
 lowest_file = find_file_with_lowest_float(file_list)
 print(lowest_file)
+lowest_file2 = find_file_with_lowest_float(file_list2)
 variable_names = ['b_0', 'b_1', 'b_2', 'b_3', 'asub_0', 't_1', 't_2', 't_3']
 line_numbers = [2, 2, 2, 2, 2, 3, 3, 3]
 column_positions = [1, 2, 3, 4, 7, 1, 2, 3]  # Adjust the column positions accordingly
@@ -91,6 +120,7 @@ assigned_variables = assign_variables_with_multipliers(
     multiplier1,
     multiplier2
 )
+multiplier2 = [0.98, 1.02]
 
 b0b=assigned_variables['b_0']
 b1b=assigned_variables['b_1']
@@ -109,3 +139,4 @@ print('t1b = (%s , %s)'%t1b)
 print('t2b = (%s , %s)'%t2b)
 print('t3b = (%s , %s)'%t3b)
 print('asubb = (%s , %s)'%asubb)
+calculate_bounds(multiplier2,lowest_file2)
