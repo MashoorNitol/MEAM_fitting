@@ -15,6 +15,9 @@ from scipy.optimize import differential_evolution
 import glob
 import re
 
+import warnings
+warnings.filterwarnings("ignore", message="color is redundantly defined by the 'color' keyword argument and the fmt string")
+
 
 ev_angstrom3 = 160.2176621 # 1 eV/Å3 = 160.2176621 GPa
 # MEAM constants #
@@ -247,11 +250,16 @@ def struct_mod(cryst,element_properties_database):
                \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
                     \ncreate_box 1 box\ncreate_atoms 1 box'%latparam)
     elif cryst=='hcp':
-        if element_properties_database.get("symbol") == 'Ti' or element_properties_database.get("symbol") == 'Zr' or element_properties_database.get("symbol") == 'Hf':
+        if element_properties_database.get("symbol") == 'Ti':
             return('variable a equal %.6f\nlattice hcp $a\
                 \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
                     \ncreate_box 1 box\ncreate_atoms 1 box\
                         \nchange_box all z scale 0.9712 remap\n'%latparam)
+        elif element_properties_database.get("symbol") == 'Zr' or element_properties_database.get("symbol") == 'Hf':
+            return('variable a equal %.6f\nlattice hcp $a\
+                \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
+                    \ncreate_box 1 box\ncreate_atoms 1 box\
+                        \nchange_box all z scale 0.98 remap\n'%latparam)        
         else:
             return('variable a equal %.6f\nlattice hcp $a\
                    \nregion box prism 0 1.0 0 1.0 0 1.0 0.0 0.0 0.0\
@@ -505,7 +513,7 @@ def vacancy_formation(cryst,latparam,type_atom,output,potential_file):
         f.write(potential_mod(style,potential_file) + '\n\n')
         f.write(output_mod() + '\n\n')
         f.write(minimization() + '\n\n')
-        f.write('\nreplicate 4 4 4\
+        f.write('\nreplicate 10 10 10\
                 \nrun 0\
                 \nvariable N equal count(all)\
                 \nvariable No equal $N\
@@ -1062,8 +1070,9 @@ def extract_surface_formation_energy(cryst, surface, output):
                 energy_parts = line.split('=')
                 if len(energy_parts) > 1:
                     energy_with_unit = energy_parts[1].strip()
-                    if 'j/m^2' in energy_with_unit:
+                    if 'erg/cm^2' in energy_with_unit:
                         energy = energy_with_unit.split(' ')[0]
+                        print(energy)
                         return {'fs_%s' % surface: energy}
     # If the line is not found or the file is empty
     return None
@@ -1300,7 +1309,7 @@ def freesurfaceenergy(cryst,latparam,type_atom,output,surface,potential_file):
         # surfaces = ['0001','10m10','1011','1122']        
         properties = 'surface_%s_%s_%s'%(cryst,surface,type_atom)
         if surface == '0001':
-            os.system('atomsk --create %s %.16f %.16f %s orient [1-210] [1-100] [0001] -orthogonal-cell -duplicate 2 2 8 hcp_%s.lmp >/dev/null 2>&1'%(cryst,latparam,lz_latparam,type_atom,surface))
+            os.system('atomsk --create %s %.16f %.16f %s orient [1-210] [1-100] [0001] -orthogonal-cell -duplicate 1 1 10 hcp_%s.lmp >/dev/null 2>&1'%(cryst,latparam,lz_latparam,type_atom,surface))
             with open('surf.in', 'w') as f:
                 f.write(lammps_header() + '\n\n')
                 f.write('\nread_data hcp_%s.lmp'%surface+ '\n\n')
@@ -1326,7 +1335,7 @@ def freesurfaceenergy(cryst,latparam,type_atom,output,surface,potential_file):
             os.system('mv surf.in *.lmp  dump_lammps log.lammps  %s/'%properties)
             return surface_info
         elif surface == '1010':
-            os.system('atomsk --create %s %.16f %.16f %s orient [1-210] [0001] [10-10] -orthogonal-cell -duplicate 2 2 8 hcp_%s.lmp >/dev/null 2>&1'%(cryst,latparam,lz_latparam,type_atom,surface))
+            os.system('atomsk --create %s %.16f %.16f %s orient [1-210] [0001] [10-10] -orthogonal-cell -duplicate 1 1 10 hcp_%s.lmp >/dev/null 2>&1'%(cryst,latparam,lz_latparam,type_atom,surface))
             with open('surf.in', 'w') as f:
                 f.write(lammps_header() + '\n\n')
                 f.write('\nread_data hcp_%s.lmp'%surface+ '\n\n')
@@ -1352,7 +1361,7 @@ def freesurfaceenergy(cryst,latparam,type_atom,output,surface,potential_file):
             os.system('mv surf.in *.lmp  dump_lammps log.lammps  %s/'%properties)
             return surface_info
         elif surface == '1101':
-            os.system('atomsk --create %s %.16f %.16f %s orient [-12-10] [10-12] [-1011] -orthogonal-cell -duplicate 2 1 1 hcp_%s.lmp >/dev/null 2>&1'%(cryst,latparam,lz_latparam,type_atom,surface))                
+            os.system('atomsk --create %s %.16f %.16f %s orient [-12-10] [10-12] [-1011] -orthogonal-cell -duplicate 1 1 1 hcp_%s.lmp >/dev/null 2>&1'%(cryst,latparam,lz_latparam,type_atom,surface))                
             with open('surf.in', 'w') as f:
                 f.write(lammps_header() + '\n\n')
                 f.write('\nread_data hcp_%s.lmp'%surface+ '\n\n')
@@ -1772,7 +1781,7 @@ def extract_gsfe(cryst,type_atom, output,plane,direction):
                             if 'j/m^2' in energy_with_unit:
                                 energy = energy_with_unit.split(' ')[0]
                                 result_dict.update({'sf_%s_%s_tb' % (plane, direction): energy})
-        if plane == '1010' and direction == '1120':
+        if plane == '1010' and direction == '1210':
             pl3 = '10-10'
             dt3 = '1-210'
             target_line = 'unstable stacking fault for %s %s %s plane in %s direction' % (type_atom,cryst,pl3,dt3)
@@ -1983,7 +1992,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data = np.genfromtxt(gsfe_output)          
             x_data = [i for i in np.linspace(0,1,len(data))]
-            y_data = [(data[i][1]-data[0][1])/1000 for i in range(len(data))]
+            y_data = [(data[i][1]-data[0][1])/1 for i in range(len(data))]
             y_subset = [y for x, y in zip(x_data, y_data) if 0 <= x <= 0.3]
             y_usf = max(y_subset)
             y_subset = [y for x, y in zip(x_data, y_data) if 0.3 <= x <= 0.6]
@@ -2106,7 +2115,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data2 = np.genfromtxt(gsfe_output)         
             x_data2 = [i2 for i2 in np.linspace(0,1,len(data2))]
-            y_data2 = [(data2[i][1]-data2[0][1])/1000 for i in range(len(data2))]
+            y_data2 = [(data2[i][1]-data2[0][1])/1 for i in range(len(data2))]
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0 <= x2 <= 0.45]
             y_usf2 = max(y_subset2)
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.45 <= x2 <= 0.6]
@@ -2234,7 +2243,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             dataB = np.genfromtxt(gsfe_output)     
             x_dataB = [iB for iB in np.linspace(0,1,len(dataB))]
-            y_dataB = [(dataB[iB][1]-dataB[0][1])/1000 for iB in range(len(dataB))]
+            y_dataB = [(dataB[iB][1]-dataB[0][1])/1 for iB in range(len(dataB))]
             y_subsetB = [yB for xB, yB in zip(x_dataB, y_dataB) if 0.3 <= xB <= 0.6]
             y_usfB = max(y_subsetB)           
             direction = '111'
@@ -2351,7 +2360,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data2 = np.genfromtxt(gsfe_output)    
             x_data2 = [i2 for i2 in np.linspace(0,1,len(data2))]
-            y_data2 = [(data2[i][1]-data2[0][1])/1000 for i in range(len(data2))]
+            y_data2 = [(data2[i][1]-data2[0][1])/1 for i in range(len(data2))]
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.3 <= x2 <= 0.6]
             y_usf2 = max(y_subset2)
             fig2, ax2 = plt.subplots(facecolor='w',edgecolor='k',tight_layout=True)
@@ -2468,7 +2477,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data3 = np.genfromtxt(gsfe_output)    
             x_data3 = [i3 for i3 in np.linspace(0,1,len(data3))]
-            y_data3 = [(data3[i][1]-data3[0][1])/1000 for i in range(len(data3))]
+            y_data3 = [(data3[i][1]-data3[0][1])/1 for i in range(len(data3))]
             y_subset3 = [y3 for x3, y3 in zip(x_data3, y_data3) if 0.3 <= x3 <= 0.6]
             y_usf3 = max(y_subset3)
             fig3, ax3 = plt.subplots(facecolor='w',edgecolor='k',tight_layout=True)
@@ -2592,7 +2601,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             datahcp = np.genfromtxt(gsfe_output)    
             x_datahcp = [ihcp for ihcp in np.linspace(0,1,len(datahcp))]
-            y_datahcp = [(datahcp[ihcp][1]-datahcp[0][1])/1000 for ihcp in range(len(datahcp))]
+            y_datahcp = [(datahcp[ihcp][1]-datahcp[0][1])/1 for ihcp in range(len(datahcp))]
             y_subsethcp = [yhcp for xhcp, yhcp in zip(x_datahcp, y_datahcp) if 0.2 <= xhcp <= 0.3]
             y_usfhcp = max(y_subsethcp)
             y_subsethcp = [yhcp for xhcp, yhcp in zip(x_datahcp, y_datahcp) if 0.35 <= xhcp <= 0.55]
@@ -2713,7 +2722,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data2 = np.genfromtxt(gsfe_output)     
             x_data2 = [i2 for i2 in np.linspace(0,1,len(data2))]
-            y_data2 = [(data2[i2][1]-data2[0][1])/1000 for i2 in range(len(data2))]
+            y_data2 = [(data2[i2][1]-data2[0][1])/1 for i2 in range(len(data2))]
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.0 <= x2 <= 0.25]
             y_usf2 = max(y_subset2)
             y_subset2 = [y2 for x2, y2 in zip(x_data2, y_data2) if 0.25 <= x2 <= 0.5]
@@ -2744,7 +2753,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
                 with open(filename, 'w') as file3:
                     file3.write(new_val)
                     
-        if plane == '1010' and direction == '1120':
+        if plane == '1010' and direction == '1210':
             gsfe_output = 'gsfe_output.txt'
             plane = '10-10'
             direction = '1-210'
@@ -2837,7 +2846,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data3 = np.genfromtxt(gsfe_output)     
             x_data3 = [i3 for i3 in np.linspace(0,1,len(data3))]
-            y_data3 = [(data3[i3][1] - data3[0][1])/1000 for i3 in range(len(data3))]
+            y_data3 = [(data3[i3][1] - data3[0][1])/1 for i3 in range(len(data3))]
             y_subset3 = [y3 for x3, y3 in zip(x_data3, y_data3) if 0.0 <= x3 <= 0.45]
             y_usf3 = max(y_subset3)
             y_subset3 = [y3 for x3, y3 in zip(x_data3, y_data3) if 0.45 <= x3 <= 0.65]
@@ -2958,7 +2967,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data4 = np.genfromtxt(gsfe_output)     
             x_data4 = [i4 for i4 in np.linspace(0,1,len(data4))]
-            y_data4 = [(data4[i4][1]-data4[0][1])/1000 for i4 in range(len(data4))]
+            y_data4 = [(data4[i4][1]-data4[0][1])/1 for i4 in range(len(data4))]
             y_subset4 = [y4 for x4, y4 in zip(x_data4, y_data4) if 0.0 <= x4 <= 0.45]
             y_usf4 = max(y_subset4)
             y_subset4 = [y4 for x4, y4 in zip(x_data4, y_data4) if 0.45 <= x4 <= 0.65]
@@ -3072,7 +3081,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data5 = np.genfromtxt(gsfe_output)    
             x_data5 = [i5 for i5 in np.linspace(0,1,len(data5))]
-            y_data5 = [(data5[i5][1]-data5[0][1])/1000 for i5 in range(len(data5))]
+            y_data5 = [(data5[i5][1]-data5[0][1])/1 for i5 in range(len(data5))]
             y_subset5 = [y5 for x5, y5 in zip(x_data5, y_data5) if 0.2 <= x5 <= 0.35]
             y_usf5 = max(y_subset5)
             y_subset5 = [y5 for x5, y5 in zip(x_data5, y_data5) if 0.35 <= x5 <= 0.55]
@@ -3194,7 +3203,7 @@ def gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file):
             
             data6 = np.genfromtxt(gsfe_output)     
             x_data6 = [i6 for i6 in np.linspace(0,1,len(data6))]
-            y_data6 = [(data6[i6][1] - data6[0][1])/1000 for i6 in range(len(data6))]
+            y_data6 = [(data6[i6][1] - data6[0][1])/1 for i6 in range(len(data6))]
             y_subset6 = [y6 for x6, y6 in zip(x_data6, y_data6) if 0.2 <= x6 <= 0.35]
             y_usf6 = max(y_subset6)
             y_subset6 = [y6 for x6, y6 in zip(x_data6, y_data6) if 0.35 <= x6 <= 0.55]
@@ -3334,11 +3343,12 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
         direction = '1010'
         gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
         result_gsfe7 = extract_gsfe(cryst,type_atom, output,plane,direction)
-    if cryst == 'hcp' and 'sf_1010_1120_us' in element_properties_database:
+    if cryst == 'hcp' and 'sf_1010_1210_us' in element_properties_database:
         plane = '1010'
-        direction = '1120'
+        direction = '1210'
         gsfe(cryst,latparam,type_atom,output,plane,direction,potential_file)
-        result_gsfe8 = extract_gsfe(cryst,type_atom, output,plane,direction)  
+        result_gsfe8 = extract_gsfe(cryst,type_atom, output,plane,direction) 
+        print(result_gsfe8)
     if cryst == 'hcp' and 'sf_1101_1120_us' in element_properties_database:
         plane = '1101'
         direction = '1120'
@@ -3568,12 +3578,16 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
             param_name0001_1010_tb = key
             if param_name0001_1010_tb in result_gsfe7 and param_name0001_1010_tb in element_properties_database:
                 value0001_1010_tb = result_gsfe7[param_name0001_1010_tb]
+                # print('predicted :  %s'%float(value0001_1010_tb))
+                # print('Target :  %s'%float(element_properties_database[param_name0001_1010_tb]))
                 diffvalue0001_1010_tb = (float(value0001_1010_tb) - float(element_properties_database[param_name0001_1010_tb]))**2
                 errors.append(diffvalue0001_1010_tb)
         if cryst == 'hcp' and key == 'sf_1010_1210_us':
             param_name1010_1210_us = key
             if param_name1010_1210_us in result_gsfe8 and param_name1010_1210_us in element_properties_database:
                 value1010_1210_us = result_gsfe8[param_name1010_1210_us]
+                print('predicted :  %s'%float(value1010_1210_us))
+                print('Target :  %s'%float(element_properties_database[param_name1010_1210_us]))
                 diffvalue1010_1210_us = (float(value1010_1210_us) - float(element_properties_database[param_name1010_1210_us]))**2
                 errors.append(diffvalue1010_1210_us)
         if cryst == 'hcp' and key == 'sf_1010_1210_ss':
@@ -3649,7 +3663,7 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
     # if serror < 4.0:
         # print('~~ ERROR:{} {} {} {} {} {} {} {} {}'.format(str(serror),str(ccp2),str(elp2),str(elp3v),str(ccp3),str(elp3),str(ccp4),str(elp4)))
     print('~~ ERROR:{}'.format(str(serror)))
-    if serror < 60.0:
+    if serror < 30.0:
         # print('~~ ERROR:{}'.format(str(serror)))        
         os.system('cp %s %s_%s'%(lib_file,lib_file,str(serror)))
         os.system('cp %s %s_%s'%(param_file,param_file,str(serror)))
@@ -3663,7 +3677,7 @@ def objective_function(params=(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)):
 ###############################################################################
 
 filename = "database.data"
-element = "Ti"
+element = "Zr"
 style = 'meam'
 lammps_executable = './lmp_serial'
 element_properties_database = extract_element_properties(filename, element)
@@ -3687,18 +3701,20 @@ pf = 'potential_files_%s'%element
 os.system('mkdir %s'%pf)               
 #### Bound values, very important!!!!!!!!!!!!!!!!
 # weight from 0 to 1
-# weights = {'c11': 1.0, 'c12': 1.0, 'c13':0.0, 'c33':0.0, 'c44':1.0}  # adjust these weights as needed
-b0b=(1.0, 3.0)
-b1b=(1.0, 2.0)
-b2b=(1.0, 4.0) 
-b3b=(1.0, 2.0) 
-t0b=(1.0, 1.0) # must be 1 
-t1b=(4.0, 8.0) 
-t2b=(-3.0, -1.0) 
-t3b=(-14.0, -11.0) 
-Cminb= (0.38,0.49) 
-Cmaxb=(2.8, 2.8) 
-asubb=(0.6, 0.8)
+b0b = (1.8269513999999998 , 2.2329406)
+b1b = (5.1604488 , 6.3072152)
+b2b = (2.6150139 , 3.1961281000000006)
+b3b = (1.3667517 , 1.6704743000000002)
+t1b = (2.4509205 , 2.9955695)
+t2b = (-3.0595510000000004 , -2.5032690000000004)
+t3b = (-13.4776796 , -11.0271924)
+asubb = (0.5320071 , 0.6502309)
+Cminb = (0.48876324, 0.50871276)
+Cmaxb = (2.56755296, 2.67235104)
+t0b=(1.0, 1.0) # must be 1
+
+# Zr.library_10.43               Zr.parameter_10.43          output_lammps_sims.data_10.43
+
 bounds = [b0b,b1b,b2b,b3b,t0b,t1b,t2b,t3b,Cminb,Cmaxb,asubb,(0.9*alpha, 1.1*alpha)]
 
 convergence_threshold = 0.005  # Initial convergence threshold
