@@ -1,0 +1,120 @@
+# unit: melting point : K, modulus and elastic constant(ec) : GPa, vac/octa/tetra: eV, fs : J/m^2, sf: j/m^2, deltaE* : eV
+
+# element: Nb
+symbol = Nb
+ground_state = bcc
+atomic_number = 41
+atomic_weight = 92.90638
+melting_point = 2741
+lattice_constant_a = 3.3
+lattice_constant_c = 3.3
+cohesieve_energy = 7.57
+bulk_modulus = 170
+shear_modulus = 38
+ec_c11 = 252.7
+ec_c12 = 133.2
+ec_c44 = 31
+e_vac = 2.75
+e_octa = 4.89
+e_tetra = 4.56
+fs_100 = 2.340
+fs_110 = 2.100
+fs_111 = 2.390
+sf_110_111_us = 0.676
+sf_112_111_us = 0.76882
+sf_123_111_us = 0.76742
+deltaE_fcc = 0.14
+deltaE_hcp = 0.128
+
+# element: Ti
+symbol = Ti
+ground_state = hcp
+atomic_number = 22
+atomic_weight = 47.88
+melting_point = 1933
+lattice_constant_a = 2.95
+ca_ratio = 1.586
+cohesieve_energy = 4.85
+bulk_modulus = 109.7
+shear_modulus = 44
+ec_c11 = 176.1
+ec_c12 = 86.9
+ec_c13 = 68.3
+ec_c33 = 190.5
+ec_c44 = 50.8
+deltaE_fcc = 0.058
+deltaE_bcc = 0.111
+e_vac = 2.11
+fs_0001 = 1.94584
+fs_1010 = 1.91716
+sf_1010_1120_us = 0.257
+sf_1010_1120_ss = 0.213
+sf_0001_1010_us = 0.424
+sf_0001_1010_ss = 0.306
+fs_1101 = 2.42441
+fs_1122 = 1.87791
+e_octa = 2.51
+e_tetra = 2.53
+# sf_1101_1123_us = 0.532
+# sf_1101_1123_ss = 0.217
+# sf_1101_1123_tb = 0.634
+# sf_1122_1123_us = 0.632
+# sf_1122_1123_ss = 0.418
+
+# element: Zr
+symbol = Zr
+ground_state = hcp
+atomic_number = 40
+atomic_weight = 91.224
+melting_point = 2128
+lattice_constant_a = 3.232
+ca_ratio = 1.603
+cohesieve_energy = 6.25
+bulk_modulus = 91.1
+shear_modulus = 35.3
+ec_c11 = 155.4
+ec_c12 = 67.2
+ec_c13 = 64.6
+ec_c33 = 172.5
+ec_c44 = 36.3
+e_vac = 2.02
+fs_0001 = 1580
+fs_1010 = 1664
+deltaE_fcc = 0.038
+deltaE_bcc = 0.084
+sf_0001_1010_us = 271
+sf_0001_1010_ss = 215
+
+# sf_0001_1010_tb = 650
+# sf_1122_1123_us = 580
+# sf_1122_1123_ss = 399
+#sf_1010_1210_us = 223
+#sf_1010_1210_ss = 208
+
+# element: Hf
+symbol = Hf
+ground_state = hcp
+atomic_number = 72
+atomic_weight = 178.49
+melting_point = 2506
+lattice_constant_a = 3.20
+ca_ratio = 1.57
+cohesieve_energy = 7.33
+bulk_modulus = 110
+shear_modulus = 30
+ec_c11 = 190.10
+ec_c12 = 74.5
+ec_c13 = 65.5
+ec_c33 = 204.4
+ec_c44 = 55.65
+sf_0001_1010_us = 498.7766519
+sf_0001_1010_ss = 336.029458
+deltaE_fcc = 0.116
+deltaE_bcc = 0.197
+e_vac = 2.307428
+fs_0001 = 1725.821284
+fs_1010 = 1873.8056
+
+#sf_1010_1210_us = 389.7499121
+#sf_1010_1210_ss = 383.9183673
+
