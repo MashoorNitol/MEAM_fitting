@@ -1,0 +1,38 @@
+""
+instruction for the user to create database:
+A. # element : what are the elements needs to consider.
+B. ref_struct : is the reference structure for MEAM
+C. to calculate alpha parameter in MEAM
+1. ref_struct_cohesieve_energy : referennce structure's Ecoh
+2. ref_struct_bulk_modulus : reference_structure's bulk modulus
+3. ref_struct_lattice_constant_a = reference_structure's lattice parameter
+D. structure_to_consider : the structures needs to consider to calculate properties 
+   and their corresponding lattice paramters
+""
+# element: Zr Ti
+ref_struct = b2
+ref_struct_cohesieve_energy = 5.58
+ref_struct_bulk_modulus = 92
+ref_struct_lattice_constant_a = 3.43
+structure_to_consider = hcp, dO19_Ti, dO19_Zr
+hcp_lattice_constant_a = 3.114
+hcp_lattice_constant_c = 4.918
+hcp_ec_c11 = 137.7
+hcp_ec_c12 = 75.3
+hcp_ec_c13 = 67.8
+hcp_ec_c33 = 164.0
+hcp_ec_c44 = 30.0
+dO19_Ti_lattice_constant_a = 3.036
+dO19_Ti_lattice_constant_c = 4.772
+dO19_Ti_ec_c11 = 140.4
+dO19_Ti_ec_c12 = 87.5
+dO19_Ti_ec_c13 = 72.4
+dO19_Ti_ec_c33 = 172.8
+dO19_Ti_ec_c44 = 35.3
+dO19_Zr_lattice_constant_a = 3.172
+dO19_Zr_lattice_constant_c = 5.049
+dO19_Zr_ec_c11 = 136.1
+dO19_Zr_ec_c12 = 77.1
+dO19_Zr_ec_c13 = 69.8
+dO19_Zr_ec_c33 = 159.0
+dO19_Zr_ec_c44 = 29.9
